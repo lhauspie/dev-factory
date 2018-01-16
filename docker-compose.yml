@@ -1,0 +1,64 @@
+version: '2'
+
+services:
+  jenkins:
+    image: jenkinsci/blueocean:1.3.5
+    container_name: devfactory_jenkins
+    restart: always
+    ports:
+     - 8000:8080
+    links:
+     - sonarqube
+    networks:
+     - sonarnet
+    volumes:
+     - jenkins_volume:/var/jenkins_home
+     - /var/run/docker.sock:/var/run/docker.sock
+
+  sonarqube:
+    image: sonarqube:6.7.1
+    container_name: devfactory_sonarqube
+    ports:
+     - 9000:9000
+     - 9092:9092
+    links:
+     - database
+    networks:
+     - sonarnet
+    environment:
+     - SONARQUBE_JDBC_URL=jdbc:mysql://database:3306/sonardb?useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true
+     - SONARQUBE_JDBC_USERNAME=sonarqube
+     - SONARQUBE_JDBC_PASSWORD=sonarqube
+    volumes:
+     - sonarqube_volume:/opt/sonarqube
+
+  database:
+    image: mysql:5
+    container_name: devfactory_database
+    ports:
+     - 3306:3306
+    networks:
+     - sonarnet
+    environment:
+     - MYSQL_ROOT_PASSWORD=root
+     - MYSQL_DATABASE=sonardb
+     - MYSQL_USER=sonarqube
+     - MYSQL_PASSWORD=sonarqube
+    volumes:
+     - mysql_volume:/var/lib/mysql
+
+
+networks:
+  sonarnet:
+    driver: bridge
+
+
+volumes:
+  jenkins_volume:
+  sonarqube_volume:
+  mysql_volume:
+
+
+
+
+
